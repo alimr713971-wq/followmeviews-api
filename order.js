@@ -1,5 +1,3 @@
-// api/order.js
-
 export default function handler(req, res) {
   if (req.method === "GET") {
     return res.status(200).json({ success: true, message: "API is working ✅ Use POST to place order." });
