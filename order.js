@@ -1,31 +1,52 @@
-// backend/order.js
-import express from "express";
-import bodyParser from "body-parser";
-import cors from "cors";
+import fetch from "node-fetch";
 
-const app = express();
-app.use(bodyParser.json());
-app.use(cors());
-
-// Order API
-app.post("/order", (req, res) => {
-  const { username, service, quantity } = req.body;
-
-  if (!username || !service || !quantity) {
-    return res.status(400).json({ error: "Missing required fields" });
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
-  // Example response (API call ka simulation)
-  res.json({
-    success: true,
-    message: "Order placed successfully!",
-    data: { username, service, quantity },
-  });
-});
+  const { service, username, quantity } = req.body;
 
-// Default route
-app.get("/", (req, res) => {
-  res.send("Backend is running ✅");
-});
+  try {
+    // 👑 FREE ORDER for Owner
+    if (username === "FREE100") {
+      return res.status(200).json({
+        success: true,
+        message: "🎉 Free order placed for owner!"
+      });
+    }
 
-export default app;
+    // ✅ REAL API CALL for other users
+    const response = await fetch("https://YOUR-SMM-PANEL.com/api/v2", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        key: "YOUR_API_KEY",   // apna SMM panel ka API key daalo
+        action: "add",
+        service: service,
+        link: `https://tiktok.com/@${username}`,
+        quantity: quantity
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.order) {
+      return res.status(200).json({
+        success: true,
+        orderId: data.order,
+        message: "✅ Order placed successfully!"
+      });
+    } else {
+      return res.status(200).json({
+        success: false,
+        error: data
+      });
+    }
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      error: "❌ Failed to connect with SMM panel"
+    });
+  }
+}
