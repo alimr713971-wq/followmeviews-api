@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import fetch from "node-fetch";  // real API call ke liye
 
 const app = express();
 app.use(cors());
@@ -11,25 +12,52 @@ app.get("/", (req, res) => {
 });
 
 // order route
-app.post("/order", (req, res) => {
+app.post("/order", async (req, res) => {
   const { service, username, quantity, promo } = req.body;
 
-  // promo code check
-  if (promo === "FREE100") {
+  try {
+    // ✅ Promo code free order
+    if (promo === "FREE100") {
+      return res.json({
+        success: true,
+        message: "🎉 Free order placed for owner!"
+      });
+    }
+
+    // ✅ Real SMM Panel API call
+    const response = await fetch("https://YOUR-SMM-PANEL.com/api/v2", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        key: "YOUR_API_KEY",   // apni API key dalni hogi
+        action: "add",
+        service: service,      // service id jo panel se milegi
+        link: `https://tiktok.com/@${username}`,  // user link ya username
+        quantity: quantity
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.order) {
+      return res.json({
+        success: true,
+        orderId: data.order,
+        message: "✅ Order placed successfully!"
+      });
+    } else {
+      return res.json({
+        success: false,
+        error: data
+      });
+    }
+
+  } catch (err) {
     return res.json({
-      success: true,
-      message: "🎉 Free order placed for owner!"
+      success: false,
+      error: "❌ Failed to connect with SMM panel"
     });
   }
-
-  // normally order response (yahan baad me real API connect hoga)
-  res.json({
-    success: true,
-    orderId: Math.floor(Math.random() * 100000),
-    service,
-    username,
-    quantity
-  });
 });
 
 const PORT = process.env.PORT || 5000;
