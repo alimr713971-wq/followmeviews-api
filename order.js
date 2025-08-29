@@ -1,24 +1,31 @@
-export default function handler(req, res) {
-  if (req.method === "POST") {
-    const { username, service, quantity } = req.body;
+// backend/order.js
+import express from "express";
+import bodyParser from "body-parser";
+import cors from "cors";
 
-    // Simple check
-    if (!username || !service || !quantity) {
-      return res.status(400).json({ success: false, message: "Missing fields" });
-    }
+const app = express();
+app.use(bodyParser.json());
+app.use(cors());
 
-    // Test response (yahan future mein real order system connect kar sakte ho)
-    res.status(200).json({
-      success: true,
-      message: "Order placed successfully!",
-      order: {
-        username,
-        service,
-        quantity,
-        orderId: Math.floor(Math.random() * 100000)
-      }
-    });
-  } else {
-    res.status(405).json({ success: false, message: "Method not allowed" });
+// Order API
+app.post("/order", (req, res) => {
+  const { username, service, quantity } = req.body;
+
+  if (!username || !service || !quantity) {
+    return res.status(400).json({ error: "Missing required fields" });
   }
-}
+
+  // Example response (API call ka simulation)
+  res.json({
+    success: true,
+    message: "Order placed successfully!",
+    data: { username, service, quantity },
+  });
+});
+
+// Default route
+app.get("/", (req, res) => {
+  res.send("Backend is running ✅");
+});
+
+export default app;
