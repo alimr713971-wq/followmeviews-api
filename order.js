@@ -1,52 +1,35 @@
+import express from "express";
 import fetch from "node-fetch";
 
-export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
+const router = express.Router();
 
-  const { service, username, quantity } = req.body;
-
+router.post("/order", async (req, res) => {
   try {
-    // 👑 FREE ORDER for Owner
-    if (username === "FREE100") {
-      return res.status(200).json({
+    const { username, service, quantity } = req.body;
+
+    // ✅ Free orders for owner
+    if (username === "owner") {
+      return res.json({
         success: true,
-        message: "🎉 Free order placed for owner!"
+        message: "Free order created for owner ✅",
+        data: { username, service, quantity }
       });
     }
 
-    // ✅ REAL API CALL for other users
-    const response = await fetch("https://YOUR-SMM-PANEL.com/api/v2", {
+    // ✅ Otherwise call real API
+    const apiResponse = await fetch("https://your-smm-api-link.com/order", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        key: "YOUR_API_KEY",   // apna SMM panel ka API key daalo
-        action: "add",
-        service: service,
-        link: `https://tiktok.com/@${username}`,
-        quantity: quantity
-      })
+      body: JSON.stringify({ username, service, quantity })
     });
 
-    const data = await response.json();
+    const result = await apiResponse.json();
+    res.json(result);
 
-    if (data.order) {
-      return res.status(200).json({
-        success: true,
-        orderId: data.order,
-        message: "✅ Order placed successfully!"
-      });
-    } else {
-      return res.status(200).json({
-        success: false,
-        error: data
-      });
-    }
-  } catch (err) {
-    return res.status(500).json({
-      success: false,
-      error: "❌ Failed to connect with SMM panel"
-    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, error: "Server error" });
   }
-}
+});
+
+export default router;
